@@ -70,17 +70,27 @@ class LocalOnlyRequestsSession(requests.Session):
         raise RuntimeError(f"External network access is disabled: {url}")
 
 
+REMOTE_AUDIO_CONVERTER_NAMES = {"Mp3Converter", "WavConverter"}
+
+
 def create_local_only_converter() -> MarkItDown:
-    """Build MarkItDown without its remote audio converter."""
+    """Build MarkItDown without its remote audio converters.
+
+    markitdown 0.0.2's Mp3Converter/WavConverter transcribe via
+    speech_recognition's recognize_google, which uploads audio to Google's
+    API. Audio files never reach this converter (they're routed to the
+    local whisper model instead), but these are stripped anyway so this
+    instance can never make that remote call.
+    """
     local_converter = MarkItDown(requests_session=LocalOnlyRequestsSession())
-    registrations = local_converter._converters
-    local_converter._converters = [
+    registrations = local_converter._page_converters
+    local_converter._page_converters = [
         registration
         for registration in registrations
-        if registration.converter.__class__.__name__ != "AudioConverter"
+        if registration.__class__.__name__ not in REMOTE_AUDIO_CONVERTER_NAMES
     ]
-    if len(local_converter._converters) == len(registrations):
-        raise RuntimeError("Could not disable MarkItDown's remote audio converter")
+    if len(local_converter._page_converters) == len(registrations):
+        raise RuntimeError("Could not disable MarkItDown's remote audio converters")
     return local_converter
 
 
