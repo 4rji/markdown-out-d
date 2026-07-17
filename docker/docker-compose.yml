@@ -1,0 +1,16 @@
+services:
+  markdown-converter:
+    build: .
+    ports:
+      - "8082:8082"
+    volumes:
+      # Whisper model downloaded on the host (see README.md).
+      # Remove this volume if you built the image with DOWNLOAD_MODEL=1.
+      - /opt/models/faster-whisper-base:/opt/models/faster-whisper-base:ro
+    environment:
+      - WHISPER_MODEL_PATH=/opt/models/faster-whisper-base
+      # - WHISPER_LANGUAGE=es
+      # - MAX_UPLOAD_SIZE_MB=500
+      # - FFMPEG_TIMEOUT_SECONDS=600
+      # - WHISPER_BEAM_SIZE=5
+    restart: unless-stopped
